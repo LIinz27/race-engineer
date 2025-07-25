@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 24 Race Telemetry Table</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .connection-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+
+        .connected {
+            background: #27ae60;
+            color: white;
+        }
+
+        .disconnected {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .telemetry-table {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #333;
+        }
+
+        thead {
+            background: #2c3e50;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+
+        .position-col {
+            width: 50px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .driver-col {
+            width: 80px;
+            font-weight: bold;
+        }
+
+        .time-col {
+            width: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .gap-col {
+            width: 90px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-col {
+            width: 80px;
+        }
+
+        /* Position colors */
+        .pos-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); }
+        .pos-2 { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); }
+        .pos-3 { background: linear-gradient(135deg, #cd7f32, #daa520); }
+
+        /* Row hover effect */
+        tbody tr:hover {
+            background: rgba(52, 152, 219, 0.1);
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        /* Invalid lap styling */
+        .invalid-lap {
+            background: rgba(231, 76, 60, 0.1) !important;
+        }
+
+        /* Pit status styling */
+        .pit-status {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .pit-track {
+            background: #27ae60;
+            color: white;
+        }
+
+        .pit-pitting {
+            background: #f39c12;
+            color: white;
+        }
+
+        .pit-lane {
+            background: #e74c3c;
+            color: white;
+        }
+
+        /* Sector time styling */
+        .fastest-sector {
+            background: #9b59b6;
+            color: white;
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+
+        .sector-time {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        /* Gap styling */
+        .gap-leader {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .gap-time {
+            color: #e74c3c;
+        }
+
+        /* Session info */
+        .session-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .last-update {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .telemetry-table {
+                font-size: 0.9em;
+            }
+            
+            th, td {
+                padding: 8px 4px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .telemetry-table {
+                font-size: 0.8em;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            th, td {
+                padding: 6px 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏁 F1 24 Race Telemetry</h1>
+        <div id="connectionStatus" class="connection-status disconnected">Disconnected</div>
+    </div>
+
+    <div class="session-info">
+        <div id="sessionInfo">Session: Unknown | Total Drivers: 0</div>
+        <div id="lastUpdate" class="last-update">Last Update: Never</div>
+    </div>
+
+    <div class="telemetry-table">
+        <table>
+            <thead>
+                <tr>
+                    <th class="position-col">Pos</th>
+                    <th class="driver-col">Driver</th>
+                    <th class="time-col">Lap</th>
+                    <th class="time-col">Last Lap</th>
+                    <th class="time-col">Current</th>
+                    <th class="time-col sector-time">S1</th>
+                    <th class="time-col sector-time">S2</th>
+                    <th class="time-col sector-time">S3</th>
+                    <th class="gap-col">Gap Leader</th>
+                    <th class="gap-col">Gap Front</th>
+                    <th class="status-col">Status</th>
+                    <th class="status-col">Stops</th>
+                </tr>
+            </thead>
+            <tbody id="driversTableBody">
+                <tr>
+                    <td colspan="12" style="text-align: center; padding: 40px;">
+                        <div style="font-size: 1.2em; color: #666;">
+                            🔄 Waiting for telemetry data...
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.9em; color: #999;">
+                            Make sure F1 24 is running and UDP telemetry is enabled
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const socket = io();
+        let connectionStatus = false;
+
+        // Connection status handling
+        socket.on('connect', function() {
+            connectionStatus = true;
+            updateConnectionStatus();
+            console.log('✅ Connected to telemetry server');
+        });
+
+        socket.on('disconnect', function() {
+            connectionStatus = false;
+            updateConnectionStatus();
+            console.log('❌ Disconnected from telemetry server');
+        });
+
+        // Update connection status display
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connectionStatus) {
+                statusElement.textContent = '🟢 Connected';
+                statusElement.className = 'connection-status connected';
+            } else {
+                statusElement.textContent = '🔴 Disconnected';
+                statusElement.className = 'connection-status disconnected';
+            }
+        }
+
+        // Telemetry data update
+        socket.on('telemetry_update', function(data) {
+            console.log('📊 Received telemetry update:', data);
+            updateTelemetryTable(data);
+            updateSessionInfo(data);
+        });
+
+        function updateTelemetryTable(data) {
+            const tableBody = document.getElementById('driversTableBody');
+            
+            if (!data.drivers || data.drivers.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="12" style="text-align: center; padding: 40px;">
+                            <div style="font-size: 1.2em; color: #666;">
+                                📡 No driver data available
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #999;">
+                                Waiting for race session data...
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Generate table rows for all drivers
+            const rows = data.drivers.map(driver => {
+                const positionClass = driver.position <= 3 ? `pos-${driver.position}` : '';
+                const invalidClass = driver.current_lap_invalid ? 'invalid-lap' : '';
+                const rowClass = `${positionClass} ${invalidClass}`.trim();
+
+                // Determine pit status styling
+                let pitStatusClass = 'pit-track';
+                if (driver.pit_status === 'Pitting') pitStatusClass = 'pit-pitting';
+                else if (driver.pit_status === 'Pit Lane') pitStatusClass = 'pit-lane';
+
+                // Format gap display
+                const gapLeader = driver.gap_to_leader === 'Leader' ? 
+                    `<span class="gap-leader">Leader</span>` : 
+                    `<span class="gap-time">${driver.gap_to_leader}</span>`;
+
+                const gapFront = driver.gap_to_front === 'Leader' ? 
+                    `<span class="gap-leader">--</span>` : 
+                    `<span class="gap-time">${driver.gap_to_front}</span>`;
+
+                return `
+                    <tr class="${rowClass}">
+                        <td class="position-col">${driver.position || '--'}</td>
+                        <td class="driver-col">${driver.driver_name}</td>
+                        <td class="time-col">${driver.lap_number}</td>
+                        <td class="time-col">${driver.last_lap_time}</td>
+                        <td class="time-col">${driver.current_lap_time}</td>
+                        <td class="time-col sector-time">${driver.sector1_time}</td>
+                        <td class="time-col sector-time">${driver.sector2_time}</td>
+                        <td class="time-col sector-time">${driver.sector3_time}</td>
+                        <td class="gap-col">${gapLeader}</td>
+                        <td class="gap-col">${gapFront}</td>
+                        <td class="status-col">
+                            <span class="pit-status ${pitStatusClass}">${driver.pit_status}</span>
+                        </td>
+                        <td class="status-col">${driver.pit_stops}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tableBody.innerHTML = rows;
+        }
+
+        function updateSessionInfo(data) {
+            const sessionInfoElement = document.getElementById('sessionInfo');
+            const lastUpdateElement = document.getElementById('lastUpdate');
+            
+            const driverCount = data.drivers ? data.drivers.length : 0;
+            const sessionType = data.session_type || 'Unknown';
+            
+            sessionInfoElement.textContent = `Session: ${sessionType} | Total Drivers: ${driverCount}`;
+            
+            if (data.last_update) {
+                const updateTime = new Date(data.last_update).toLocaleTimeString();
+                lastUpdateElement.textContent = `Last Update: ${updateTime}`;
+            }
+        }
+
+        // Initialize
+        updateConnectionStatus();
+        
+        // Request initial data
+        setTimeout(() => {
+            fetch('/api/telemetry')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('📊 Initial telemetry data:', data);
+                    updateTelemetryTable(data);
+                    updateSessionInfo(data);
+                })
+                .catch(error => {
+                    console.error('❌ Error fetching initial data:', error);
+                });
+        }, 1000);
+    </script>
+</body>
+</html>

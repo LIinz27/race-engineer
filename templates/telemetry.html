@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 24 Telemetry Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: #ff1801;
+            text-shadow: 0 0 20px rgba(255, 24, 1, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #cccccc;
+        }
+
+        .race-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .race-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .position-card {
+            border-color: #FFD700;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 255, 255, 0.1));
+        }
+
+        .lap-card {
+            border-color: #00ff00;
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.1), rgba(255, 255, 255, 0.1));
+        }
+
+        .time-card {
+            border-color: #ff6b00;
+            background: linear-gradient(135deg, rgba(255, 107, 0, 0.1), rgba(255, 255, 255, 0.1));
+        }
+
+        .status-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-connected { background: #00ff00; }
+        .status-warning { background: #ffaa00; }
+        .status-disconnected { background: #ff0000; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .telemetry-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .telemetry-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            color: #cccccc;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .card-unit {
+            font-size: 1rem;
+            color: #888888;
+        }
+
+        .position-value {
+            font-size: 4rem;
+            color: #FFD700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        .lap-value {
+            color: #00ff00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .time-value {
+            color: #ff6b00;
+            text-shadow: 0 0 10px rgba(255, 107, 0, 0.5);
+            font-family: 'Courier New', monospace;
+        }
+
+        .sector-times {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .sector-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .sector1 { border-left: 4px solid #00ff00; }
+        .sector2 { border-left: 4px solid #ffff00; }
+        .sector3 { border-left: 4px solid #ff00ff; }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .throttle-progress { background: linear-gradient(90deg, #00ff00, #ffff00); }
+        .brake-progress { background: linear-gradient(90deg, #ff0000, #ff6600); }
+
+        .steering-indicator {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            position: relative;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .steering-center {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: #ffffff;
+            transform: translateX(-50%);
+        }
+
+        .steering-needle {
+            position: absolute;
+            top: 50%;
+            width: 4px;
+            height: 20px;
+            background: #ff1801;
+            border-radius: 2px;
+            transform: translateY(-50%);
+            transition: left 0.2s ease;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .timestamp {
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .telemetry-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        .connection-lost {
+            opacity: 0.5;
+        }
+
+        .data-valid {
+            animation: dataUpdate 0.5s ease;
+        }
+
+        @keyframes dataUpdate {
+            0% { background: rgba(0, 255, 0, 0.1); }
+            100% { background: transparent; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>� F1 24 RACE DASHBOARD</h1>
+            <p>Real-time Position & Timing Data</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div id="statusDot" class="status-dot status-disconnected"></div>
+                <span id="statusText">Disconnected</span>
+            </div>
+            <div class="timestamp" id="timestamp">--:--:--</div>
+            <div>
+                <span>Packets: </span>
+                <span id="packetCount">0</span>
+            </div>
+        </div>
+
+        <div class="race-info">
+            <div class="race-card position-card">
+                <div class="card-title">Current Position</div>
+                <div class="card-value position-value" id="position">--</div>
+                <div class="card-unit">P</div>
+            </div>
+
+            <div class="race-card lap-card">
+                <div class="card-title">Current Lap</div>
+                <div class="card-value lap-value" id="lapNumber">0</div>
+                <div class="card-unit">lap</div>
+            </div>
+
+            <div class="race-card time-card">
+                <div class="card-title">Current Lap Time</div>
+                <div class="card-value time-value" id="currentLapTime">00:00.000</div>
+                <div class="card-unit">mm:ss.mmm</div>
+            </div>
+        </div>
+
+        <div class="telemetry-grid">
+            <div class="telemetry-card">
+                <div class="card-title">Last Lap Time</div>
+                <div class="card-value time-value" id="lastLapTime">00:00.000</div>
+                <div class="card-unit">mm:ss.mmm</div>
+            </div>
+
+            <div class="telemetry-card">
+                <div class="card-title">Best Lap Time</div>
+                <div class="card-value time-value" id="bestLapTime">00:00.000</div>
+                <div class="card-unit">mm:ss.mmm</div>
+            </div>
+
+            <div class="telemetry-card">
+                <div class="card-title">Gap to Leader</div>
+                <div class="card-value" id="gapToLeader">+0.000</div>
+                <div class="card-unit">seconds</div>
+            </div>
+
+            <div class="telemetry-card">
+                <div class="card-title">Gap to Car Ahead</div>
+                <div class="card-value" id="gapToCarAhead">+0.000</div>
+                <div class="card-unit">seconds</div>
+            </div>
+        </div>
+
+        <div class="sector-times">
+            <div class="sector-card sector1">
+                <div class="card-title">Sector 1</div>
+                <div class="card-value time-value" id="sector1Time">00.000</div>
+                <div class="card-unit">seconds</div>
+            </div>
+
+            <div class="sector-card sector2">
+                <div class="card-title">Sector 2</div>
+                <div class="card-value time-value" id="sector2Time">00.000</div>
+                <div class="card-unit">seconds</div>
+            </div>
+
+            <div class="sector-card sector3">
+                <div class="card-title">Sector 3</div>
+                <div class="card-value time-value" id="sector3Time">00.000</div>
+                <div class="card-unit">seconds</div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-row">
+                <span>Connection Status:</span>
+                <span id="connectionStatus">Waiting for data...</span>
+            </div>
+            <div class="info-row">
+                <span>Driver Name:</span>
+                <span id="driverName">Unknown</span>
+            </div>
+            <div class="info-row">
+                <span>Data Valid:</span>
+                <span id="dataValid">No</span>
+            </div>
+            <div class="info-row">
+                <span>Last Update:</span>
+                <span id="lastUpdate" class="timestamp">Never</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // Connection status handling
+        socket.on('connect', function() {
+            console.log('Connected to telemetry server');
+            updateConnectionStatus('connected', 'Connected');
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('Disconnected from telemetry server');
+            updateConnectionStatus('disconnected', 'Disconnected');
+        });
+        
+        // Telemetry data handling
+        socket.on('telemetry_update', function(data) {
+            updateTelemetryDisplay(data);
+        });
+        
+        // Fallback: Poll for data every second if WebSocket fails
+        setInterval(fetchTelemetryData, 1000);
+        
+        function fetchTelemetryData() {
+            fetch('/api/telemetry')
+                .then(response => response.json())
+                .then(data => {
+                    updateTelemetryDisplay(data);
+                })
+                .catch(error => {
+                    console.log('API fetch failed, using WebSocket data');
+                });
+        }
+        
+        function updateTelemetryDisplay(data) {
+            // Update race position dan timing values
+            document.getElementById('position').textContent = data.position || '--';
+            document.getElementById('lapNumber').textContent = data.lap_number || 0;
+            document.getElementById('currentLapTime').textContent = data.current_lap_time || '00:00.000';
+            document.getElementById('lastLapTime').textContent = data.last_lap_time || '00:00.000';
+            document.getElementById('bestLapTime').textContent = data.best_lap_time || '00:00.000';
+            document.getElementById('sector1Time').textContent = data.sector1_time || '00.000';
+            document.getElementById('sector2Time').textContent = data.sector2_time || '00.000';
+            document.getElementById('sector3Time').textContent = data.sector3_time || '00.000';
+            document.getElementById('gapToLeader').textContent = data.gap_to_leader || '+0.000';
+            document.getElementById('gapToCarAhead').textContent = data.gap_to_car_ahead || '+0.000';
+            document.getElementById('driverName').textContent = data.driver_name || 'Unknown';
+            document.getElementById('packetCount').textContent = data.packets_received || 0;
+            document.getElementById('timestamp').textContent = data.timestamp || '--:--:--';
+            
+            // Update connection status
+            const status = data.connection_status || 'disconnected';
+            let statusText = 'Unknown';
+            
+            switch(status) {
+                case 'connected':
+                    statusText = 'Live Data';
+                    break;
+                case 'warning':
+                    statusText = 'Data Delayed';
+                    break;
+                case 'disconnected':
+                    statusText = 'No Data';
+                    break;
+            }
+            
+            updateConnectionStatus(status, statusText);
+            
+            // Update info panel
+            document.getElementById('dataValid').textContent = data.valid_data ? 'Yes' : 'No';
+            document.getElementById('lastUpdate').textContent = data.timestamp || 'Never';
+            
+            // Add visual feedback for data updates
+            if (data.valid_data) {
+                document.querySelector('.dashboard-container').classList.remove('connection-lost');
+                document.querySelector('.race-info').classList.add('data-valid');
+                setTimeout(() => {
+                    document.querySelector('.race-info').classList.remove('data-valid');
+                }, 500);
+            } else {
+                document.querySelector('.dashboard-container').classList.add('connection-lost');
+            }
+        }
+        
+        function updateConnectionStatus(status, text) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const connectionStatus = document.getElementById('connectionStatus');
+            
+            // Remove all status classes
+            statusDot.classList.remove('status-connected', 'status-warning', 'status-disconnected');
+            
+            // Add appropriate status class
+            statusDot.classList.add('status-' + status);
+            statusText.textContent = text;
+            connectionStatus.textContent = text;
+        }
+        
+        // Initialize display
+        updateConnectionStatus('disconnected', 'Connecting...');
+    </script>
+</body>
+</html>
