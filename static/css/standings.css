@@ -1,0 +1,141 @@
+/* Standings Page Specific Styles */
+
+.standings {
+    padding: 1rem 0;
+}
+
+/* Session info section */
+.session-info {
+    margin-bottom: 1.5rem;
+}
+
+.session-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.info-card {
+    background-color: var(--card-bg-color);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.info-row {
+    margin: 0.5rem 0;
+}
+
+.info-label {
+    font-weight: bold;
+    margin-right: 0.5rem;
+    color: #aaa;
+}
+
+.info-value {
+    font-weight: 500;
+}
+
+/* Standings table */
+.standings-table-container {
+    background-color: var(--card-bg-color);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+}
+
+.standings-table {
+    width: 100%;
+    min-width: 900px; /* Ensure the table doesn't get too compressed */
+}
+
+.standings-table th,
+.standings-table td {
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.standings-table th {
+    position: sticky;
+    top: 0;
+    background-color: var(--accent-color);
+    z-index: 1;
+}
+
+.standings-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Driver status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-racing {
+    background-color: #4caf50; /* Green */
+}
+
+.status-pitting {
+    background-color: #ff9800; /* Orange */
+}
+
+.status-retired {
+    background-color: #f44336; /* Red */
+}
+
+.status-finished {
+    background-color: #2196f3; /* Blue */
+}
+
+/* Team colors */
+.team-mercedes {
+    border-left: 4px solid #00D2BE;
+}
+
+.team-redbull {
+    border-left: 4px solid #0600EF;
+}
+
+.team-ferrari {
+    border-left: 4px solid #DC0000;
+}
+
+.team-mclaren {
+    border-left: 4px solid #FF8700;
+}
+
+.team-aston-martin {
+    border-left: 4px solid #006F62;
+}
+
+.team-alpine {
+    border-left: 4px solid #0090FF;
+}
+
+.team-williams {
+    border-left: 4px solid #005AFF;
+}
+
+.team-haas {
+    border-left: 4px solid #ffffff;
+}
+
+.team-alfa-romeo {
+    border-left: 4px solid #900000;
+}
+
+.team-alphatauri {
+    border-left: 4px solid #2B4562;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .session-details {
+        grid-template-columns: 1fr;
+    }
+}

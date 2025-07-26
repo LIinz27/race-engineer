@@ -1,0 +1,194 @@
+/* Car Telemetry Page Specific Styles */
+
+.car-telemetry {
+    padding: 1rem 0;
+}
+
+.telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.telemetry-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+}
+
+.value-container {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.large-value {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.unit {
+    font-size: 1rem;
+    color: #aaa;
+}
+
+.gauge-container {
+    flex: 1;
+    position: relative;
+    height: 120px;
+}
+
+/* Speed card */
+.speed .large-value {
+    color: #4caf50;
+}
+
+/* RPM card */
+.rpm .large-value {
+    color: #ff9800;
+}
+
+/* Gear card */
+.gear {
+    text-align: center;
+}
+
+.gear .large-value {
+    font-size: 5rem;
+    color: #2196f3;
+}
+
+/* Throttle & Brake card */
+.throttle-brake {
+    padding-bottom: 0;
+}
+
+.pedals-container {
+    display: flex;
+    justify-content: space-between;
+    height: 150px;
+    margin-top: 1rem;
+}
+
+.pedal-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 45%;
+}
+
+.pedal-label {
+    margin-bottom: 0.5rem;
+}
+
+.pedal-bar-container {
+    width: 50px;
+    height: 100%;
+    background-color: #333;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+}
+
+.pedal-bar {
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    transition: height 0.2s ease;
+}
+
+.throttle {
+    background-color: #4caf50;
+}
+
+.brake {
+    background-color: #f44336;
+}
+
+.pedal-value {
+    margin-top: 0.5rem;
+    font-weight: bold;
+}
+
+/* Tyre temps card */
+.tyre-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1rem;
+    margin-top: 1rem;
+    height: 150px;
+}
+
+.tyre {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--accent-color);
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.tyre-label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.tyre-temp {
+    font-size: 1.2rem;
+}
+
+/* DRS status card */
+.drs-status {
+    display: flex;
+    flex-direction: column;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.status-light {
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.status-light.inactive {
+    background-color: #444;
+    color: #aaa;
+}
+
+.status-light.active {
+    background-color: #4caf50;
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .telemetry-grid {
+        grid-template-columns: 1fr;
+    }
+}

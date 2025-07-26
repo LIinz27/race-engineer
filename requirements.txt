@@ -1,28 +1,6 @@
-# Python dependencies untuk F1 24 Race Engineer
-
-# Core dependencies
-socket  # Built-in, untuk UDP communication
-struct  # Built-in, untuk parsing binary data
-
-# Text-to-Speech
-pyttsx3>=2.90
-
-# Data processing
-numpy>=1.21.0
-
-# Configuration handling  
-json  # Built-in
-
-# Optional: GUI (jika ingin membuat interface)
-# tkinter  # Built-in on Windows
-# pygame>=2.1.0  # Untuk game overlay
-
-# Optional: Advanced audio
-# pygame>=2.1.0  # Untuk audio playback yang lebih advanced
-
-# Optional: Logging dan monitoring
-# colorama>=0.4.4  # Untuk colored terminal output
-
-# Development dependencies (optional)
-# pytest>=6.0.0  # Untuk testing
-# black>=21.0.0   # Code formatting
+flask==2.3.3
+flask-socketio==5.3.6
+python-engineio==4.7.1
+python-socketio==5.9.0
+eventlet==0.33.3
+simple-websocket==0.10.1

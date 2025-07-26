@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - F1 Telemetry</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/time_telemetry.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('car_telemetry') }}" class="{% if request.path == '/car-telemetry' or request.path == '/' %}active{% endif %}">Car Telemetry</a></li>
+                <li><a href="{{ url_for('time_telemetry') }}" class="{% if request.path == '/time-telemetry' %}active{% endif %}">Time Telemetry</a></li>
+                <li><a href="{{ url_for('standings') }}" class="{% if request.path == '/standings' %}active{% endif %}">Standings</a></li>
+            </ul>
+        </nav>
+        <h1>F1 Telemetry - {{ title }}</h1>
+    </header>
+
+    <main class="time-telemetry">
+        <section class="time-display">
+            <div class="lap-info-container">
+                <div class="lap-card current-lap">
+                    <h2>Current Lap</h2>
+                    <div class="lap-time" id="current-lap-time">--:--:---</div>
+                    <div class="lap-number">Lap: <span id="lap-number">0</span></div>
+                </div>
+                
+                <div class="lap-card last-lap">
+                    <h2>Last Lap</h2>
+                    <div class="lap-time" id="last-lap-time">--:--:---</div>
+                    <div class="delta-indicator" id="last-lap-delta">+0.000</div>
+                </div>
+                
+                <div class="lap-card best-lap">
+                    <h2>Best Lap</h2>
+                    <div class="lap-time" id="best-lap-time">--:--:---</div>
+                    <div class="lap-number">Lap: <span id="best-lap-number">0</span></div>
+                </div>
+            </div>
+            
+            <div class="sector-times-container">
+                <h2>Sector Times</h2>
+                <table class="sector-table">
+                    <thead>
+                        <tr>
+                            <th>Sector</th>
+                            <th>Current</th>
+                            <th>Best</th>
+                            <th>Delta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>S1</td>
+                            <td id="current-s1">--:--:---</td>
+                            <td id="best-s1">--:--:---</td>
+                            <td id="delta-s1" class="delta">+0.000</td>
+                        </tr>
+                        <tr>
+                            <td>S2</td>
+                            <td id="current-s2">--:--:---</td>
+                            <td id="best-s2">--:--:---</td>
+                            <td id="delta-s2" class="delta">+0.000</td>
+                        </tr>
+                        <tr>
+                            <td>S3</td>
+                            <td id="current-s3">--:--:---</td>
+                            <td id="best-s3">--:--:---</td>
+                            <td id="delta-s3" class="delta">+0.000</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="lap-history-container">
+                <h2>Lap History</h2>
+                <div class="lap-history-chart">
+                    <canvas id="lap-chart"></canvas>
+                </div>
+                <div class="lap-history-table-container">
+                    <table class="lap-history-table" id="lap-history-table">
+                        <thead>
+                            <tr>
+                                <th>Lap</th>
+                                <th>Time</th>
+                                <th>S1</th>
+                                <th>S2</th>
+                                <th>S3</th>
+                                <th>Delta</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lap-history-body">
+                            <!-- Lap history will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>F1 Telemetry Web App - Based on F1 Game Data</p>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/time_telemetry.js') }}"></script>
+</body>
+</html>
